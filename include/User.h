@@ -5,7 +5,6 @@
 
 using namespace std;
 
-// Перечисление ролей
 enum UserRole {
     ADMIN,
     STUDENT
@@ -18,8 +17,7 @@ public:
     string password;
     UserRole role;
 
-    User(int id, string username, string password, UserRole role) 
-        : id(id), username(username), password(password), role(role) {}
+    User(int id, string username, string password, UserRole role) : id(id), username(username), password(password), role(role) {}
 };
 
 #endif

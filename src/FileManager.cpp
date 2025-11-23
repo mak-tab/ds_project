@@ -6,14 +6,12 @@
 
 using namespace std;
 
-FileManager::FileManager(string file) {
-    filename = file;
-}
+FileManager::FileManager(string file) { filename = file; }
 
 void FileManager::saveBooks(Library& lib) {
     ofstream outFile(filename);
     if (!outFile.is_open()) {
-        cerr << "Error: Could not open file for saving!" << endl;
+        cerr << "[ERROR]: Could not open file for saving!" << endl;
         return;
     }
 
@@ -35,21 +33,19 @@ void FileManager::saveBooks(Library& lib) {
 void FileManager::loadBooks(Library& lib) {
     ifstream inFile(filename);
     if (!inFile.is_open()) {
-        cout << "File not found. Creating new database..." << endl;
+        cout << "[ERROR]File not found. \n[FIX] Creating new database" << endl;
         return;
     }
 
     string line;
-    getline(inFile, line); // Пропуск заголовка
+    getline(inFile, line);
 
     while (getline(inFile, line)) {
         stringstream ss(line);
         string segment;
         vector<string> row;
 
-        while (getline(ss, segment, ',')) {
-            row.push_back(segment);
-        }
+        while (getline(ss, segment, ',')) { row.push_back(segment); }
 
         if (row.size() >= 5) {
             try {

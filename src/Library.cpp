@@ -2,56 +2,42 @@
 #include "../include/FineManager.h"
 #include "../include/Utils.h"
 
-Library::Library() {
-    head = nullptr;
-}
+Library::Library() { head = nullptr; }
 
 Library::~Library() {
     Book* current = head;
     while (current != nullptr) {
         Book* nextBook = current->next;
-        delete current; // Вызывает деструктор Book -> вызывает деструктор Queue
+        delete current;
         current = nextBook;
     }
 }
 
-bool Library::isIDUnique(int id) {
-    return searchBookByID(id) == nullptr;
-}
+bool Library::isIDUnique(int id) { return searchBookByID(id) == nullptr; }
 
-// === ALGORITHM: Sorted Insert into Linked List ===
-// Requirement: "inserted into the linked list in sorted order by Book ID"
 void Library::addBook(int id, string title, string author, int total) {
     if (!isIDUnique(id)) {
-        cout << "Error: Book with ID " << id << " already exists!" << endl;
+        cout << "[ERROR]: Book with ID " << id << " already exists!" << endl;
         return;
     }
 
     Book* newBook = new Book(id, title, author, total);
 
-    // Случай 1: Список пуст или новый ID меньше первого элемента
-    // Вставка в начало (Head)
     if (head == nullptr || head->id > id) {
         newBook->next = head;
         head = newBook;
     } 
     else {
-        // Случай 2: Ищем позицию для вставки в середине или конце
         Book* current = head;
         
-        // Идем пока не дойдем до конца ИЛИ пока следующий ID меньше нового
-        while (current->next != nullptr && current->next->id < id) {
-            current = current->next;
-        }
+        while (current->next != nullptr && current->next->id < id) { current = current->next; }
         
-        // Вставляем newBook ПОСЛЕ current
         newBook->next = current->next;
         current->next = newBook;
     }
     cout << "Book '" << title << "' added successfully." << endl;
 }
 
-// === SEARCH OPERATIONS ===
 Book* Library::searchBookByID(int id) {
     Book* current = head;
     while (current != nullptr) {
@@ -66,20 +52,15 @@ Book* Library::searchBookByID(int id) {
 Book* Library::searchBookByTitle(string title) {
     Book* current = head;
     Book* bestMatch = nullptr;
-    int minDistance = 100; // Произвольное большое число
+    int minDistance = 100;
 
-    cout << "Searching for: " << title << "..." << endl;
+    cout << "Searching for  -  " << title << "" << endl;
 
     while (current != nullptr) {
-        // 1. Точное совпадение (приоритет)
-        if (Utils::toLower(current->title) == Utils::toLower(title)) {
-            return current;
-        }
+        if (Utils::toLower(current->title) == Utils::toLower(title)) { return current; }
 
-        // 2. Расчет Левенштейна
         int dist = Utils::levenshteinDistance(current->title, title);
         
-        // Если расстояние меньше 3 (допустим, 1-2 опечатки), запоминаем как кандидата
         if (dist < 3 && dist < minDistance) {
             minDistance = dist;
             bestMatch = current;
@@ -88,9 +69,8 @@ Book* Library::searchBookByTitle(string title) {
         current = current->next;
     }
 
-    // Если точного нет, но есть похожее
     if (bestMatch != nullptr) {
-        cout << "Exact match not found. Did you mean: '" << bestMatch->title << "'?" << endl;
+        cout << "Exact match not found. You probably meant: \"" << bestMatch->title << "\"" << endl;
         return bestMatch;
     }
 
@@ -100,9 +80,7 @@ Book* Library::searchBookByTitle(string title) {
 Book* Library::searchBookByAuthor(string author) {
     Book* current = head;
     while (current != nullptr) {
-        if (current->author == author) {
-            return current;
-        }
+        if (current->author == author) { return current; }
         current = current->next;
     }
     return nullptr;
@@ -115,25 +93,19 @@ void Library::issueBook(int bookID, int studentID) {
         return;
     }
 
-    // 1. Если есть копии -> выдаем и назначаем дату
     if (book->borrowBook()) {
-        cout << "------------------------------------------------" << endl;
-        cout << "SUCCESS: Book issued to Student ID: " << studentID << endl;
+        cout << "[SUCCESS]: Book issued to Student ID: " << studentID << endl;
         
-        // [Feature C: Due-Date]
-        // Стандартный срок выдачи - 14 дней
         string dueDate = FineManager::getDueDateString(14);
         cout << "DUE DATE: " << dueDate << " (Please return by this date)" << endl;
         cout << "------------------------------------------------" << endl;
     } 
-    // 2. Если копий нет -> очередь
     else {
         cout << "No copies available. Adding Student " << studentID << " to waiting list..." << endl;
         book->waitList.enqueue(studentID);
     }
 }
 
-// === RETURN LOGIC (UPDATED) ===
 void Library::returnBook(int bookID) {
     Book* book = searchBookByID(bookID);
     if (book == nullptr) {
@@ -141,11 +113,8 @@ void Library::returnBook(int bookID) {
         return;
     }
 
-    // [Feature C: Fine Calculation]
-    // Спрашиваем библиотекаря о просрочке
     int delayedDays = 0;
-    cout << "Enter days delayed (0 if returned on time): ";
-    // Простая защита от ввода букв
+    cout << "[INFO] Enter days delayed (0 if returned on time): ";
     if (!(cin >> delayedDays)) {
         cin.clear();
         cin.ignore(1000, '\n');
@@ -154,24 +123,21 @@ void Library::returnBook(int bookID) {
 
     if (delayedDays > 0) {
         int fine = FineManager::calculateFine(delayedDays);
-        cout << "\n!!! LATE RETURN DETECTED !!!" << endl;
-        cout << "Fine amount: " << fine << " UZS" << endl;
+        cout << "[INFO] Fine amount: " << fine << " UZS" << endl;
         cout << "Please collect the fine from the student.\n" << endl;
     } else {
-        cout << "Returned on time. No fine." << endl;
+        cout << "[INFO] Returned on time. No fine." << endl;
     }
 
-    // Стандартная логика возврата (очередь или полка)
     if (!book->waitList.isEmpty()) {
         int nextStudent = book->waitList.dequeue();
         cout << "Book passed to next student in queue: ID " << nextStudent << endl;
         
-        // Сразу сообщаем новому студенту его дату возврата
-        cout << "New Due Date for Student " << nextStudent << ": " << FineManager::getDueDateString(14) << endl;
+        cout << "[INFO] New Due Date for Student " << nextStudent << ": " << FineManager::getDueDateString(14) << endl;
     } 
     else {
         book->returnBookCopy();
-        cout << "Book returned to shelf. Available copies increased." << endl;
+        cout << "[INFO] Book returned to shelf. Available copies increased." << endl;
     }
 }
 
@@ -181,11 +147,15 @@ void Library::displayAllBooks() {
         return;
     }
     
-    cout << "\n--- Library Catalog ---" << endl;
+    cout << R"(
+    |=============================|
+    ||      Library Catalog      ||
+    |=============================|
+    )";
     Book* current = head;
     while (current != nullptr) {
-        current->displayBookInfo(); // Метод из Book.cpp
+        current->displayBookInfo();
         current = current->next;
     }
-    cout << "-----------------------" << endl;
+    cout << "|=============================|" << endl;
 }

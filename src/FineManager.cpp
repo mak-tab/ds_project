@@ -4,7 +4,7 @@
 #include <iomanip>
 
 int FineManager::calculateFine(int daysDelayed) {
-    if (daysDelayed <= 0) return 0;
+    if (daysDelayed <= 0) { return 0; }
     return daysDelayed * FINE_PER_DAY;
 }
 

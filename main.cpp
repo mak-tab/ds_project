@@ -4,7 +4,6 @@
 #include "include/FileManager.h"
 #include "include/AuthManager.h"
 
-
 using namespace std;
 
 void clearInput() {
@@ -12,21 +11,30 @@ void clearInput() {
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 }
 
-// Меню для Студента
 void studentMenu(Library& lib, User* currentUser) {
     int choice = 0;
     while (choice != 4) {
-        cout << "\n--- STUDENT MENU (" << currentUser->username << ") ---" << endl;
-        cout << "1. Search for a Book" << endl;
-        cout << "2. Borrow Book (Issue)" << endl;
-        cout << "3. Return Book" << endl;
-        cout << "4. Logout" << endl;
+        cout << R"(
+|=========================================================|
+||  STUDENT MENU (")" << currentUser->username << R"()   ||
+|=========================================================|
+|| [1] Search for a Book                                 ||
+|| [2] Borrow Book (Issue)                               ||
+|| [3] Return Book                                       ||
+|| [4] Logout                                            ||
+|=========================================================|
+)";
+
         cout << "Enter choice: ";
-        cin >> choice;
+        
+        if (!(cin >> choice)) {
+            cout << "[ERROR]Invalid input! Please enter a number." << endl;
+            clearInput();
+            continue;
+        }
 
         switch (choice) {
             case 1: {
-                // Упрощенный поиск для студента (по названию)
                 string title;
                 cout << "Enter Book Title: ";
                 cin.ignore();
@@ -38,79 +46,112 @@ void studentMenu(Library& lib, User* currentUser) {
             case 2: {
                 int bookID;
                 cout << "Enter Book ID to borrow: ";
-                cin >> bookID;
-                // Студент использует свой ID автоматически
+                while (!(cin >> bookID)) {
+                    cout << "[ERROR]Invalid ID. Enter a number: ";
+                    clearInput();
+                }
                 lib.issueBook(bookID, currentUser->id);
                 break;
             }
             case 3: {
                 int bookID;
                 cout << "Enter Book ID to return: ";
-                cin >> bookID;
+                while (!(cin >> bookID)) {
+                    cout << "[ERROR]Invalid ID. Enter a number: ";
+                    clearInput();
+                }
                 lib.returnBook(bookID);
                 break;
             }
             case 4:
-                cout << "Logging out..." << endl;
+                cout << "[INFO] Log out" << endl;
                 break;
-            default: cout << "Invalid choice." << endl;
+            default: cout << "[ERROR]Invalid choice." << endl;
         }
     }
 }
 
-// Меню для Админа
 void adminMenu(Library& lib, User* currentUser, FileManager& fm, AuthManager& auth) {
     int choice = 0;
-    while (choice != 6) {
-        cout << "\n--- ADMIN MENU (" << currentUser->username << ") ---" << endl;
-        cout << "1. Add New Book" << endl;
-        cout << "2. Search for a Book" << endl;
-        cout << "3. Display All Books" << endl;
-        cout << "4. Save Data" << endl;
-        cout << "5. Issue/Return (Manual Override)" << endl;
-        cout << "6. Logout" << endl;
-        cout << "7. Register New User" << endl;
+    while (choice != 7) {
+        cout << R"(
+|=========================================================|
+||  ADMIN MENU (")" << currentUser->username << R"()     ||
+|=========================================================|
+||     [1] Add New Book                                  ||
+||     [2] Search for a Book                             ||
+||     [3] Display All Books                             ||
+||     [4] Save Data                                     ||
+||     [5] Issue/Return (Manual Override)                ||
+||     [6] Register New User                             ||
+||     [7] Logout                                        ||
+|=========================================================|
+)";
         cout << "Enter choice: ";
-        cin >> choice;
+        
+        if (!(cin >> choice)) {
+            cout << "[ERROR] Invalid input! Please enter a number." << endl;
+            clearInput();
+            continue;
+        }
 
         switch (choice) {
             case 1: {
                 int id, total;
                 string title, author;
-                cout << "ID: "; cin >> id;
+                cout << "ID: "; 
+                while (!(cin >> id)) {
+                    cout << "[ERROR] Invalid input. Enter Number: ";
+                    clearInput();
+                }
                 cin.ignore();
+                
                 cout << "Title: "; getline(cin, title);
                 cout << "Author: "; getline(cin, author);
-                cout << "Copies: "; cin >> total;
+                
+                cout << "Copies: "; 
+                while (!(cin >> total)) {
+                    cout << "[ERROR] Invalid input. Enter Number: ";
+                    clearInput();
+                }
+                
                 lib.addBook(id, title, author, total);
                 break;
             }
             case 2: {
-                int id; cout << "ID: "; cin >> id;
+                int id; 
+                cout << "ID: "; 
+                while (!(cin >> id)) {
+                    cout << "[ERROR] Invalid ID. Enter a number: ";
+                    clearInput();
+                }
                 Book* b = lib.searchBookByID(id);
-                if(b) b->displayBookInfo(); else cout << "Not found." << endl;
+                if(b) b->displayBookInfo(); else cout << "[INFO] Not found." << endl;
                 break;
             }
             case 3: lib.displayAllBooks(); break;
             case 4: fm.saveBooks(lib); break;
             case 5: cout << "Use student menu for flow test or implement override here." << endl; break;
-            case 6: cout << "Logging out..." << endl; break;
-            case 7: {
+            case 6: { 
                 string newU, newP;
                 int roleChoice;
-                cout << "Enter New Username: "; cin >> newU;
-                cout << "Enter New Password: "; cin >> newP;
-                cout << "Role (0 = Admin, 1 = Student): "; cin >> roleChoice;
+                cout << "Enter UserName: "; cin >> newU;
+                cout << "Enter Password: "; cin >> newP;
+                cout << "Role (0 = Admin, 1 = Student): "; 
+                while (!(cin >> roleChoice)) {
+                    cout << "[ERROR] Invalid input. Enter 0 or 1: ";
+                    clearInput();
+                }
                         
-                // ТЕПЕРЬ ЭТО РАБОТАЕТ:
                 if (auth.registerUser(newU, newP, (UserRole)roleChoice)) {
-                    cout << "User registered successfully!" << endl;
+                    cout << "[INFO] User registered successfully!" << endl;
                 } else {
-                    cout << "Error: Username already exists." << endl;
+                    cout << "[ERROR] Username already exists." << endl;
                 }
                 break;
             }
-            default: cout << "Invalid choice." << endl;
+            case 7: cout << "[INFO] Logging out..." << endl; break;
+            default: cout << "[ERROR] Invalid choice." << endl;
         }
     }
 }
@@ -118,18 +159,26 @@ void adminMenu(Library& lib, User* currentUser, FileManager& fm, AuthManager& au
 int main() {
     Library lib;
     FileManager fileManager("library_data.csv");
-    AuthManager authManager; // Система авторизации
+    AuthManager authManager; 
 
     fileManager.loadBooks(lib);
 
     while (true) {
-        cout << "\n=== WELCOME TO INHA LIBRARY SYSTEM ===" << endl;
-        cout << "1. Login" << endl;
-        cout << "2. Exit" << endl;
-        cout << "Choice: ";
+        cout << R"(
+|==============================|
+||          WELCOME           ||
+||            TO              ||
+||  SOMEONE's LIBRARY SYSTEM  ||
+|==============================|
+||     [1] Login              ||
+||     [2] Exit               ||
+|==============================|
+)";
+        cout << "Enter choice: ";
         
         int startChoice;
         if (!(cin >> startChoice)) {
+            cout << "[ERROR] Invalid input! Please enter a number." << endl;
             clearInput();
             continue;
         }
@@ -147,15 +196,12 @@ int main() {
             User* currentUser = authManager.authenticate(user, pass);
 
             if (currentUser != nullptr) {
-                cout << "Login successful! Role: " << (currentUser->role == ADMIN ? "Admin" : "Student") << endl;
+                cout << "[INFO] Login successful! Role: " << (currentUser->role == ADMIN ? "Admin" : "Student") << endl;
                 
-                if (currentUser->role == ADMIN) {
-                    adminMenu(lib, currentUser, fileManager, authManager);
-                } else {
-                    studentMenu(lib, currentUser);
-                }
+                if (currentUser->role == ADMIN) { adminMenu(lib, currentUser, fileManager, authManager); } 
+                else { studentMenu(lib, currentUser); }
             } else {
-                cout << "Error: Invalid credentials!" << endl;
+                cout << "[ERROR] Invalid credentials!" << endl;
             }
         }
     }
