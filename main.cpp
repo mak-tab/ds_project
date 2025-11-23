@@ -27,10 +27,9 @@
 
 #include <iostream>
 #include <limits>
-#include "/include/Library.h"
-#include "/include/FileManager.h"
-#include "/include/AuthManager.h"
-
+#include "../include/Library.h"
+#include "../include/FileManager.h"
+#include "../include/AuthManager.h"
 using namespace std;
 
 void clearInput() {
