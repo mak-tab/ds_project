@@ -1,75 +1,30 @@
 #include "../include/FileManager.h"
-#include <fstream>
-#include <sstream>
-#include <vector>
 #include <iostream>
+#include <sstream>
+#include <iomanip> // Для put_time
 
-using namespace std;
-
-FileManager::FileManager(string file) {
-    filename = file;
+int FineManager::calculateFine(int daysDelayed) {
+    if (daysDelayed <= 0) return 0;
+    return daysDelayed * FINE_PER_DAY;
 }
 
-void FileManager::saveBooks(Library& lib) {
-    ofstream outFile(filename);
-    if (!outFile.is_open()) {
-        cerr << "Error: Could not open file for saving!" << endl;
-        return;
-    }
+string FineManager::getDueDateString(int daysToAdd) {
+    // Получаем текущее время
+    time_t now = time(nullptr);
+    
+    // Конвертируем в структуру tm (время)
+    tm* ltm = localtime(&now);
 
-    outFile << "ID,Title,Author,TotalCopies,AvailableCopies" << endl;
+    // Добавляем дни
+    ltm->tm_mday += daysToAdd;
+    
+    // Нормализуем дату (mktime сам исправит "32 января" на "1 февраля")
+    mktime(ltm);
 
-    Book* current = lib.getHead();
-    while (current != nullptr) {
-        outFile << current->id << ","
-                << current->title << ","
-                << current->author << ","
-                << current->totalCopies << ","
-                << current->availableCopies << endl;
-        current = current->next;
-    }
-    outFile.close();
-    cout << "Data saved successfully." << endl;
-}
-
-void FileManager::loadBooks(Library& lib) {
-    ifstream inFile(filename);
-    if (!inFile.is_open()) {
-        cout << "File not found. Creating new database..." << endl;
-        return;
-    }
-
-    string line;
-    getline(inFile, line); // Пропуск заголовка
-
-    while (getline(inFile, line)) {
-        stringstream ss(line);
-        string segment;
-        vector<string> row;
-
-        while (getline(ss, segment, ',')) {
-            row.push_back(segment);
-        }
-
-        if (row.size() >= 5) {
-            try {
-                int id = stoi(row[0]);
-                string title = row[1];
-                string author = row[2];
-                int total = stoi(row[3]);
-                int available = stoi(row[4]);
-
-                lib.addBook(id, title, author, total);
-                
-                // Хак для восстановления availableCopies
-                Book* loadedBook = lib.searchBookByID(id);
-                if (loadedBook) {
-                    loadedBook->availableCopies = available;
-                }
-            } catch (...) {
-                continue;
-            }
-        }
-    }
-    inFile.close();
+    // Форматируем в строку (DD/MM/YYYY)
+    // В C++ (до C++11/20) put_time не всегда доступен, сделаем классически через strftime
+    char buffer[80];
+    strftime(buffer, sizeof(buffer), "%d/%m/%Y", ltm);
+    
+    return string(buffer);
 }

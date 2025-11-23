@@ -1,4 +1,5 @@
 #include "../include/Library.h"
+#include "../include/FineManager.h"
 
 Library::Library() {
     head = nullptr;
@@ -85,8 +86,6 @@ Book* Library::searchBookByAuthor(string author) {
     return nullptr;
 }
 
-// === ISSUE LOGIC ===
-// Requirement: Check availability -> Issue OR Add to Queue
 void Library::issueBook(int bookID, int studentID) {
     Book* book = searchBookByID(bookID);
     if (book == nullptr) {
@@ -94,21 +93,25 @@ void Library::issueBook(int bookID, int studentID) {
         return;
     }
 
-    // 1. Если есть копии -> выдаем
+    // 1. Если есть копии -> выдаем и назначаем дату
     if (book->borrowBook()) {
-        cout << "Book issued to Student ID: " << studentID << endl;
+        cout << "------------------------------------------------" << endl;
+        cout << "SUCCESS: Book issued to Student ID: " << studentID << endl;
+        
+        // [Feature C: Due-Date]
+        // Стандартный срок выдачи - 14 дней
+        string dueDate = FineManager::getDueDateString(14);
+        cout << "DUE DATE: " << dueDate << " (Please return by this date)" << endl;
+        cout << "------------------------------------------------" << endl;
     } 
-    // 2. Если копий нет -> ставим в очередь
+    // 2. Если копий нет -> очередь
     else {
         cout << "No copies available. Adding Student " << studentID << " to waiting list..." << endl;
         book->waitList.enqueue(studentID);
-        // Requirement: "Inform the student of their position" - это можно добавить в Queue.h, 
-        // но пока просто подтвердим добавление.
     }
 }
 
-// === RETURN LOGIC ===
-// Requirement: If queue not empty -> give to next student. Else -> increase copies.
+// === RETURN LOGIC (UPDATED) ===
 void Library::returnBook(int bookID) {
     Book* book = searchBookByID(bookID);
     if (book == nullptr) {
@@ -116,16 +119,37 @@ void Library::returnBook(int bookID) {
         return;
     }
 
-    // Проверяем очередь ожидания
+    // [Feature C: Fine Calculation]
+    // Спрашиваем библиотекаря о просрочке
+    int delayedDays = 0;
+    cout << "Enter days delayed (0 if returned on time): ";
+    // Простая защита от ввода букв
+    if (!(cin >> delayedDays)) {
+        cin.clear();
+        cin.ignore(1000, '\n');
+        delayedDays = 0;
+    }
+
+    if (delayedDays > 0) {
+        int fine = FineManager::calculateFine(delayedDays);
+        cout << "\n!!! LATE RETURN DETECTED !!!" << endl;
+        cout << "Fine amount: " << fine << " UZS" << endl;
+        cout << "Please collect the fine from the student.\n" << endl;
+    } else {
+        cout << "Returned on time. No fine." << endl;
+    }
+
+    // Стандартная логика возврата (очередь или полка)
     if (!book->waitList.isEmpty()) {
         int nextStudent = book->waitList.dequeue();
-        cout << "Book returned. Automatically issued to next student in queue: ID " << nextStudent << endl;
-        // Важно: availableCopies НЕ увеличивается, так как книга перешла из рук в руки.
-        // [Cite source: 52 "Available copies remain unchanged"]
+        cout << "Book passed to next student in queue: ID " << nextStudent << endl;
+        
+        // Сразу сообщаем новому студенту его дату возврата
+        cout << "New Due Date for Student " << nextStudent << ": " << FineManager::getDueDateString(14) << endl;
     } 
     else {
         book->returnBookCopy();
-        cout << "Book returned successfully. Available copies increased." << endl;
+        cout << "Book returned to shelf. Available copies increased." << endl;
     }
 }
 
