@@ -1,5 +1,6 @@
 #include "../include/Library.h"
 #include "../include/FineManager.h"
+#include "../include/Utils.h"
 
 Library::Library() {
     head = nullptr;
@@ -64,14 +65,35 @@ Book* Library::searchBookByID(int id) {
 
 Book* Library::searchBookByTitle(string title) {
     Book* current = head;
+    Book* bestMatch = nullptr;
+    int minDistance = 100; // Произвольное большое число
+
+    cout << "Searching for: " << title << "..." << endl;
+
     while (current != nullptr) {
-        // Для простоты сравнение чувствительно к регистру.
-        // В идеале нужно приводить к lower_case.
-        if (current->title == title) {
+        // 1. Точное совпадение (приоритет)
+        if (Utils::toLower(current->title) == Utils::toLower(title)) {
             return current;
         }
+
+        // 2. Расчет Левенштейна
+        int dist = Utils::levenshteinDistance(current->title, title);
+        
+        // Если расстояние меньше 3 (допустим, 1-2 опечатки), запоминаем как кандидата
+        if (dist < 3 && dist < minDistance) {
+            minDistance = dist;
+            bestMatch = current;
+        }
+
         current = current->next;
     }
+
+    // Если точного нет, но есть похожее
+    if (bestMatch != nullptr) {
+        cout << "Exact match not found. Did you mean: '" << bestMatch->title << "'?" << endl;
+        return bestMatch;
+    }
+
     return nullptr;
 }
 

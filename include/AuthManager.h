@@ -14,6 +14,7 @@ public:
 
     // Возвращает указатель на найденного пользователя или nullptr, если логин неверен
     User* authenticate(string username, string password);
+    bool registerUser(string username, string password, UserRole role);
 };
 
 #endif

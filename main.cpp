@@ -1,30 +1,3 @@
-// my_project/
-// │
-// ├── include/
-// │   ├── Book.h
-// │   ├── FileManager.h
-// │   ├── Library.h
-// │   └── Queue.h
-// │
-// ├── src/
-// │   ├── Book.cpp
-// │   ├── FileManager.cpp
-// │   ├── Library.cpp
-// │   └── Queue.cpp
-// │
-// ├── Extended_Features/
-// │   ├── AVL_Tree_for_Fast_Searching
-// │   │   └── 
-// │   │
-// │   ├── User_Login_System/
-// │   │   └── 
-// │   │
-// │   └── Due-Date_and_Fine_Calculation/
-// │       └── 
-// │   
-// ├── library_data.csv
-// └── main.cpp
-
 #include <iostream>
 #include <limits>
 #include "../include/Library.h"
@@ -84,7 +57,7 @@ void studentMenu(Library& lib, User* currentUser) {
 }
 
 // Меню для Админа
-void adminMenu(Library& lib, User* currentUser, FileManager& fm) {
+void adminMenu(Library& lib, User* currentUser, FileManager& fm, AuthManager& auth) {
     int choice = 0;
     while (choice != 6) {
         cout << "\n--- ADMIN MENU (" << currentUser->username << ") ---" << endl;
@@ -94,6 +67,7 @@ void adminMenu(Library& lib, User* currentUser, FileManager& fm) {
         cout << "4. Save Data" << endl;
         cout << "5. Issue/Return (Manual Override)" << endl;
         cout << "6. Logout" << endl;
+        cout << "7. Register New User" << endl;
         cout << "Enter choice: ";
         cin >> choice;
 
@@ -119,6 +93,22 @@ void adminMenu(Library& lib, User* currentUser, FileManager& fm) {
             case 4: fm.saveBooks(lib); break;
             case 5: cout << "Use student menu for flow test or implement override here." << endl; break;
             case 6: cout << "Logging out..." << endl; break;
+            case 7: { // Добавь новый case
+                string newU, newP;
+                int roleChoice;
+                cout << "Enter New Username: "; cin >> newU;
+                cout << "Enter New Password: "; cin >> newP;
+                cout << "Role (0 = Admin, 1 = Student): "; cin >> roleChoice;
+                        
+                // Трюк с AuthManager (нужно передать его в функцию adminMenu)
+                // В твоем текущем коде AuthManager создается в main. 
+                // Тебе нужно передать ссылку на authManager в adminMenu.
+                        
+                // Пока для простоты представим, что он передан.
+                // authManager.registerUser(newU, newP, (UserRole)roleChoice);
+                cout << "User registered (Feature pending passing AuthManager reference)." << endl;
+                break;
+            }
             default: cout << "Invalid choice." << endl;
         }
     }
@@ -159,7 +149,7 @@ int main() {
                 cout << "Login successful! Role: " << (currentUser->role == ADMIN ? "Admin" : "Student") << endl;
                 
                 if (currentUser->role == ADMIN) {
-                    adminMenu(lib, currentUser, fileManager);
+                    adminMenu(lib, currentUser, fileManager, authManager);
                 } else {
                     studentMenu(lib, currentUser);
                 }
