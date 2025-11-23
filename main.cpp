@@ -1,8 +1,10 @@
 #include <iostream>
 #include <limits>
-#include "../include/Library.h"
-#include "../include/FileManager.h"
-#include "../include/AuthManager.h"
+#include "include/Library.h"
+#include "include/FileManager.h"
+#include "include/AuthManager.h"
+
+
 using namespace std;
 
 void clearInput() {
@@ -93,20 +95,19 @@ void adminMenu(Library& lib, User* currentUser, FileManager& fm, AuthManager& au
             case 4: fm.saveBooks(lib); break;
             case 5: cout << "Use student menu for flow test or implement override here." << endl; break;
             case 6: cout << "Logging out..." << endl; break;
-            case 7: { // Добавь новый case
+            case 7: {
                 string newU, newP;
                 int roleChoice;
                 cout << "Enter New Username: "; cin >> newU;
                 cout << "Enter New Password: "; cin >> newP;
                 cout << "Role (0 = Admin, 1 = Student): "; cin >> roleChoice;
                         
-                // Трюк с AuthManager (нужно передать его в функцию adminMenu)
-                // В твоем текущем коде AuthManager создается в main. 
-                // Тебе нужно передать ссылку на authManager в adminMenu.
-                        
-                // Пока для простоты представим, что он передан.
-                // authManager.registerUser(newU, newP, (UserRole)roleChoice);
-                cout << "User registered (Feature pending passing AuthManager reference)." << endl;
+                // ТЕПЕРЬ ЭТО РАБОТАЕТ:
+                if (auth.registerUser(newU, newP, (UserRole)roleChoice)) {
+                    cout << "User registered successfully!" << endl;
+                } else {
+                    cout << "Error: Username already exists." << endl;
+                }
                 break;
             }
             default: cout << "Invalid choice." << endl;

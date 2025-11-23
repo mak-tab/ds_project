@@ -7,12 +7,14 @@
 
 class AuthManager {
 private:
-    vector<User> users; // Список зарегистрированных пользователей
+    vector<User> users; 
+    
+    // ЭТИ ДВА МЕТОДА БЫЛИ ПРОПУЩЕНЫ:
+    void loadUsers();
+    void saveUsers();
 
 public:
-    AuthManager(); // Здесь создадим пользователей (admin/admin, student/123)
-
-    // Возвращает указатель на найденного пользователя или nullptr, если логин неверен
+    AuthManager(); 
     User* authenticate(string username, string password);
     bool registerUser(string username, string password, UserRole role);
 };
