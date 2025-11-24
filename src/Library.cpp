@@ -36,6 +36,43 @@ void Library::addBook(int id, string title, string author, int total) {
         current->next = newBook;
     }
     cout << "Book '" << title << "' added successfully." << endl;
+    historyStack.push("ADD_BOOK", id);
+}
+
+void Library::deleteBook(int id) {
+    if (head == nullptr) return;
+
+    if (head->id == id) {
+        Book* temp = head;
+        head = head->next;
+        delete temp;
+        return;
+    }
+
+    Book* current = head;
+    while (current->next != nullptr && current->next->id != id) {
+        current = current->next;
+    }
+
+    if (current->next != nullptr) {
+        Book* temp = current->next;
+        current->next = current->next->next;
+        delete temp;
+    }
+}
+
+void Library::undoLastAction() {
+    if (historyStack.isEmpty()) {
+        cout << "Nothing to undo." << endl;
+        return;
+    }
+
+    Action lastAction = historyStack.pop();
+
+    if (lastAction.type == "ADD_BOOK") {
+        deleteBook(lastAction.bookID);
+        cout << "Undo: Removed recently added book (ID: " << lastAction.bookID << ")." << endl;
+    }
 }
 
 Book* Library::searchBookByID(int id) {
@@ -86,30 +123,72 @@ Book* Library::searchBookByAuthor(string author) {
     return nullptr;
 }
 
+
 void Library::issueBook(int bookID, int studentID) {
     Book* book = searchBookByID(bookID);
     if (book == nullptr) {
-        cout << "Error: Book not found." << endl;
+        cout << "[ERROR] Book not found." << endl;
         return;
     }
 
     if (book->borrowBook()) {
-        cout << "[SUCCESS]: Book issued to Student ID: " << studentID << endl;
-        
-        string dueDate = FineManager::getDueDateString(14);
-        cout << "DUE DATE: " << dueDate << " (Please return by this date)" << endl;
+        // ЗАПИСЫВАЕМ ВРЕМЯ ВЫДАЧИ
+        loanManager.addLoan(bookID, studentID);
+
+        cout << "------------------------------------------------" << endl;
+        cout << "[SUCCESS] Book issued to Student ID: " << studentID << endl;
+        // Показываем реальную дату возврата (14 дней)
+        cout << "[INFO] DUE DATE: " << FineManager::getDueDateString(14) << endl;
         cout << "------------------------------------------------" << endl;
     } 
     else {
-        cout << "No copies available. Adding Student " << studentID << " to waiting list..." << endl;
+        cout << "[INFO] No copies available. Adding Student " << studentID << " to queue." << endl;
         book->waitList.enqueue(studentID);
+    }
+}
+
+// === АВТОМАТИЧЕСКИЙ ВОЗВРАТ ===
+void Library::returnBook(int bookID) {
+    Book* book = searchBookByID(bookID);
+    if (book == nullptr) {
+        cout << "[ERROR] Book not found." << endl;
+        return;
+    }
+
+    // 1. Ищем запись о выдаче и считаем просрочку АВТОМАТИЧЕСКИ
+    // Мы передаем studentID = -1 или ищем по книге, так как в меню возврата ID студента не спрашивали.
+    // Для точности в идеале нужно спрашивать ID студента при возврате.
+    // Но пока допустим, что возвращается любой экземпляр этой книги.
+    int delay = loanManager.returnLoanAndGetDelay(bookID, -1); 
+
+    if (delay > 0) {
+        int fine = FineManager::calculateFine(delay);
+        cout << "\n[ALERT] BOOK IS OVERDUE!" << endl;
+        cout << "[INFO] Days delayed: " << delay << endl;
+        cout << "[INFO] Automatic Fine: " << fine << " UZS" << endl;
+    } else {
+        cout << "[INFO] Returned on time (or no loan record found). No fine." << endl;
+    }
+
+    // Стандартная логика очереди
+    if (!book->waitList.isEmpty()) {
+        int nextStudent = book->waitList.dequeue();
+        cout << "[INFO] Book passed to next student: ID " << nextStudent << endl;
+        
+        // СРАЗУ ОФОРМЛЯЕМ ВЫДАЧУ НОВОМУ СТУДЕНТУ
+        loanManager.addLoan(bookID, nextStudent);
+        cout << "[INFO] New Due Date for Student " << nextStudent << ": " << FineManager::getDueDateString(14) << endl;
+    } 
+    else {
+        book->returnBookCopy();
+        cout << "[INFO] Book returned to shelf." << endl;
     }
 }
 
 void Library::returnBook(int bookID) {
     Book* book = searchBookByID(bookID);
     if (book == nullptr) {
-        cout << "Error: Book not found." << endl;
+        cout << "[ERROR] Book not found." << endl;
         return;
     }
 

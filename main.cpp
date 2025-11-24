@@ -73,7 +73,7 @@ void studentMenu(Library& lib, User* currentUser) {
 
 void adminMenu(Library& lib, User* currentUser, FileManager& fm, AuthManager& auth) {
     int choice = 0;
-    while (choice != 7) {
+    while (choice != 8) {
         cout << R"(
 |=========================================================|
 ||  ADMIN MENU (")" << currentUser->username << R"()     ||
@@ -84,7 +84,8 @@ void adminMenu(Library& lib, User* currentUser, FileManager& fm, AuthManager& au
 ||     [4] Save Data                                     ||
 ||     [5] Issue/Return (Manual Override)                ||
 ||     [6] Register New User                             ||
-||     [7] Logout                                        ||
+||     [7] Undo Last Action (Stack Demo) (It is BETA)    ||
+||     [8] Logout                                        ||
 |=========================================================|
 )";
         cout << "Enter choice: ";
@@ -150,7 +151,8 @@ void adminMenu(Library& lib, User* currentUser, FileManager& fm, AuthManager& au
                 }
                 break;
             }
-            case 7: cout << "[INFO] Logging out..." << endl; break;
+            case 7: lib.undoLastAction(); break;
+            case 8: cout << "[INFO] Logging out..." << endl; break;
             default: cout << "[ERROR] Invalid choice." << endl;
         }
     }

@@ -4,12 +4,16 @@
 #include <iostream>
 #include <string>
 #include "Book.h"
+#include "LoanManager.h"
+#include "Stack.h"
 
 using namespace std;
 
 class Library {
 private:
     Book* head;
+    LoanManager loanManager;
+    Stack historyStack;
 
     bool isIDUnique(int id);
 
@@ -34,6 +38,9 @@ public:
     void displayAllBooks();
     
     Book* getHead() const { return head; }
+    void undoLastAction();
+    
+    void deleteBook(int id);
 };
 
 #endif
